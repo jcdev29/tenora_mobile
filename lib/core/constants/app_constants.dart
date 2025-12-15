@@ -19,8 +19,8 @@ class AppConstants {
   static const String bankAccountNumber = '1234 5678 9012';
   static const String bankAccountName = 'Tenora Property Management';
   
-  // Complaint Categories
-  static const List<String> complaintCategories = [
+  // Request Categories (renamed from complaintCategories)
+  static const List<String> requestCategories = [
     'Plumbing',
     'Electrical',
     'Aircon',

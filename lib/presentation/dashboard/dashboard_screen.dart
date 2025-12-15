@@ -8,6 +8,8 @@ import '../../domain/models/tenant.dart';
 import '../../domain/models/contract.dart';
 import '../../domain/models/payment.dart';
 import '../../routes/app_router.dart';
+import '../utilities/utilities_screen.dart';
+import '../profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,9 +25,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Payment? _nextPayment;
   bool _isLoading = true;
 
+  // Define screens for bottom navigation
+  late final List<Widget> _screens;
+
   @override
   void initState() {
     super.initState();
+    _screens = [
+      _buildDashboard(),
+      const Center(child: Text('Payments')), // Placeholder
+      const UtilitiesScreen(),
+      const ProfileScreen(),
+    ];
     _loadData();
   }
 
@@ -42,23 +53,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildBody(),
+      body: _currentIndex == 0
+          ? (_isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _buildDashboard())
+          : _currentIndex == 1
+          ? const Center(child: Text('Navigate to Payments'))
+          : _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() => _currentIndex = index);
-
-          // Navigate to different screens
           if (index == 1) {
+            // Navigate to Payments screen
             Navigator.pushNamed(context, AppRouter.payments);
-          } else if (index == 2) {
-            Navigator.pushNamed(context, AppRouter.complaints);
-          } else if (index == 3) {
-            Navigator.pushNamed(context, AppRouter.profile);
+          } else {
+            setState(() => _currentIndex = index);
           }
         },
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -71,9 +83,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Payments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.report_problem_outlined),
-            activeIcon: Icon(Icons.report_problem),
-            label: 'Complaints',
+            icon: Icon(Icons.bolt_outlined),
+            activeIcon: Icon(Icons.bolt),
+            label: 'Utilities',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outlined),
@@ -85,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildDashboard() {
     return RefreshIndicator(
       onRefresh: _loadData,
       child: SafeArea(
@@ -114,19 +126,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          'Hello, ${_tenant.user.firstName}! 👋',
-          style: Theme.of(context).textTheme.displaySmall,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hello, ${_tenant.user.firstName}! 👋',
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Welcome back to Tenora',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Welcome back to Tenora',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
+        IconButton(
+          icon: const Icon(Icons.help_outline),
+          onPressed: () {
+            Navigator.pushNamed(context, AppRouter.requests);
+          },
+          tooltip: 'Requests',
+          iconSize: 28,
         ),
       ],
     );
@@ -465,11 +491,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionCard(
-                icon: Icons.report_problem,
-                label: 'File Complaint',
+                icon: Icons.help_outline,
+                label: 'New Request',
                 color: AppTheme.warningColor,
                 onTap: () {
-                  Navigator.pushNamed(context, AppRouter.fileComplaint);
+                  Navigator.pushNamed(context, AppRouter.fileRequest);
                 },
               ),
             ),
@@ -480,22 +506,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               child: _buildActionCard(
-                icon: Icons.description,
-                label: 'Contract',
-                color: AppTheme.secondaryColor,
+                icon: Icons.bolt,
+                label: 'Utilities',
+                color: Colors.amber,
                 onTap: () {
-                  Navigator.pushNamed(context, AppRouter.contract);
+                  setState(() => _currentIndex = 2);
                 },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionCard(
-                icon: Icons.help_outline,
-                label: 'Help',
-                color: AppTheme.accentColor,
+                icon: Icons.description,
+                label: 'Contract',
+                color: AppTheme.secondaryColor,
                 onTap: () {
-                  _showHelpDialog();
+                  Navigator.pushNamed(context, AppRouter.contract);
                 },
               ),
             ),
@@ -646,32 +672,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
-    );
-  }
-
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Need Help?'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Contact Admin:'),
-            SizedBox(height: 8),
-            Text('📞 +63 917 123 4567'),
-            SizedBox(height: 4),
-            Text('📧 admin@tenora.com'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }

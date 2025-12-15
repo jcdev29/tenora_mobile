@@ -41,12 +41,12 @@ class MockTenantData {
       idDocumentUrls: ['id_front.jpg', 'id_back.jpg'],
     );
   }
-  
+
   static Future<Tenant> fetchTenantProfile() async {
     await Future.delayed(const Duration(seconds: 1));
     return getCurrentTenant();
   }
-  
+
   static Future<Map<String, dynamic>> updateProfile({
     required String phone,
     required String emergencyContactName,
@@ -54,12 +54,10 @@ class MockTenantData {
     required String emergencyContactRelation,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
-    
+
     return {
       'success': true,
-      'data': {
-        'message': 'Profile updated successfully',
-      },
+      'data': {'message': 'Profile updated successfully'},
     };
   }
 }
