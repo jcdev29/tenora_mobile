@@ -20,23 +20,14 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
-  late Tenant _tenant;
-  late Contract _contract;
+  Tenant? _tenant;
+  Contract? _contract;
   Payment? _nextPayment;
   bool _isLoading = true;
-
-  // Define screens for bottom navigation
-  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    _screens = [
-      _buildDashboard(),
-      const Center(child: Text('Payments')), // Placeholder
-      const UtilitiesScreen(),
-      const ProfileScreen(),
-    ];
     _loadData();
   }
 
@@ -50,16 +41,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _isLoading = false);
   }
 
+  Widget _getCurrentScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildDashboard();
+      case 1:
+        // This won't be shown as we navigate away
+        return const Center(child: CircularProgressIndicator());
+      case 2:
+        return const UtilitiesScreen();
+      case 3:
+        return const ProfileScreen();
+      default:
+        return _buildDashboard();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _currentIndex == 0
-          ? (_isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildDashboard())
-          : _currentIndex == 1
-          ? const Center(child: Text('Navigate to Payments'))
-          : _screens[_currentIndex],
+      body: _getCurrentScreen(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -98,6 +101,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboard() {
+    if (_tenant == null || _contract == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: SafeArea(
@@ -133,7 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hello, ${_tenant.user.firstName}! 👋',
+                'Hello, ${_tenant!.user.firstName}! 👋',
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: 8),
@@ -159,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildRoomCard() {
-    final room = _tenant.currentRoom;
+    final room = _tenant!.currentRoom;
     if (room == null) return const SizedBox.shrink();
 
     return Card(
@@ -291,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          DateFormatter.formatDate(_contract.startDate),
+                          DateFormatter.formatDate(_contract!.startDate),
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
@@ -308,7 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          DateFormatter.formatDate(_contract.endDate),
+                          DateFormatter.formatDate(_contract!.endDate),
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
@@ -321,7 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _contract.isExpiring
+                  color: _contract!.isExpiring
                       ? AppTheme.warningColor.withOpacity(0.1)
                       : AppTheme.successColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -329,22 +336,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      _contract.isExpiring
+                      _contract!.isExpiring
                           ? Icons.warning_amber
                           : Icons.check_circle,
                       size: 20,
-                      color: _contract.isExpiring
+                      color: _contract!.isExpiring
                           ? AppTheme.warningColor
                           : AppTheme.successColor,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        _contract.isExpiring
-                            ? 'Contract expires in ${_contract.daysUntilExpiry} days'
+                        _contract!.isExpiring
+                            ? 'Contract expires in ${_contract!.daysUntilExpiry} days'
                             : 'Contract is active',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _contract.isExpiring
+                          color: _contract!.isExpiring
                               ? AppTheme.warningColor
                               : AppTheme.successColor,
                           fontWeight: FontWeight.w600,
